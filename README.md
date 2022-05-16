@@ -89,3 +89,103 @@ Relogin to host and restart the `test1` container (AUDITD does not log events in
 
 ## Copy file structure to micro-container
 
+Using the CBSD `copy-binlib` script and the already existing index file for a minimal FreeBSD + SSH environment in the `test1` container:
+
+> cbsd copy-binlib basedir=/ chaselibs=1 dstdir=/usr/jails/jails-data/micro1-data filelist=/usr/local/cbsd/share/FreeBSD-microbhyve.txt.xz
+
+Note: make sure */usr/jails* is the correct path for the CBSD environment in your installation.
+
+## Micro (gold) container customization
+
+With a minimal structure, we can make a number of necessary settings, such as allowing SSH access for the root user, configuring the network, and so on. We will configure the virtual machine network through the */etc/rc.local* file - are you striving for a minimal structure? ;-) so don't copy the entire */etc/rc.d* directory:
+
+```
+cbsd sysrc jname=micro1 \
+        sshd_flags="-oUseDNS=no -oPermitRootLogin=yes" \
+        root_rw_mount="YES" \
+        sshd_enable=YES \
+        rc_startmsgs="YES" 
+
+cat > /usr/jails/jails-data/micro1-data/etc/rc.local <<EOF
+/sbin/ifconfig vtnet0 inet 10.0.100.10/24 up
+/sbin/route add default 10.0.100.1
+EOF
+
+cp -a /etc/ssh /usr/jails/jails-data/micro1-data/etc/
+cp -a /etc/gss /usr/jails/jails-data/micro1-data/etc/
+cp -a /etc/pam.d /usr/jails/jails-data/micro1-data/etc/
+mkdir -p /usr/jails/jails-data/micro1-data/var/empty /usr/jails/jails-data/micro1-data/var/log /usr/jails/jails-data/micro1-data/var/run /usr/jails/jails-data/micro1-data/root /usr/jails/jails-data/micro1-data/dev
+chmod 0700 /usr/jails/jails-data/micro1-data/var/empty
+pw -R /usr/jails/jails-data/micro1-data usermod root -s /bin/sh
+
+# strip debug info via strip(1)
+find /usr/jails/jails-data/micro1-data/ -type f -perm +111 -exec strip {} \;
+```
+
+In addition, you can optionally disable the pause in [loader.conf](https://man.freebsd.org/loader.conf/5) before loading the kernel through the `autoboot_delay` parameter and the *~cbsd/jails-system/micro1/loader.conf* file, which is processed by the CBSD `jail2iso` script. In this case, you are unlikely to be able to see the loading process of FreeBSD OS - everything will happen instantly ;-)
+
+## Getting the FreeBSD microkernel for bhyve
+
+We need the FreeBSD sources (/usr/src) to compile a custom FreeBSD kernel for our bhyve environment. There is already a microkernel configuration file in CBSD called 'BHYVE', so we will get the FreeBSD source code (if not already) and compile the kernel:
+
+```
+cbsd srcup
+cbsd kernel name=BHYVE
+```
+
+As a result of these commands, the FreeBSD micro-kernel will be waiting for us in the *~cbsd/basejail/FreeBSD-kernel_BHYVE_amd64_XX* directory, which we will specify when running the CBSD `jail2iso` script. At the same time, some of the modules may not be useful to us when working in bhyve, and we can even pack the core itself via gzip:
+
+```
+ls -1 /usr/jails/basejail/FreeBSD-kernel_BHYVE_amd64_13.1/boot/kernel/
+if_vtnet.ko
+kernel
+linker.hints
+virtio.ko
+virtio_balloon.ko
+virtio_blk.ko
+virtio_console.ko
+virtio_pci.ko
+virtio_random.ko
+virtio_scsi.ko
+
+rm -f /usr/jails/basejail/FreeBSD-kernel_BHYVE_amd64_13.1/boot/kernel/{virtio_balloon.ko,virtio_console.ko,virtio_scsi.ko}
+strip /usr/jails/basejail/FreeBSD-kernel_BHYVE_amd64_13.1/boot/kernel/*.ko
+gzip -9 /usr/jails/basejail/FreeBSD-kernel_BHYVE_amd64_13.1/boot/kernel/kernel
+```
+
+## CBSD jail2iso magic: get the image!
+
+We just have to get the image from the `micro1` container. Let the image be generated into the **/tmp** directory. The `freesize` parameter controls the amount of free disk space:
+
+> cbsd jail2iso name=BHYVE jname=micro1 dstdir=/tmp media=bhyve freesize=4m efi=1 ver=native
+
+As a result, a small image **/tmp/micro1-13.1_amd64.img** will be generated:
+
+```
+du -sh /tmp/micro1-13.1_amd64.img
+12M    /tmp/micro1-13.1_amd64.img
+```
+
+which you can check immediately via the `bhyve` startup script:
+
+> sh /usr/share/examples/bhyve/vmrun.sh -d /tmp/micro1-13.1_amd64.img micro1
+
+However, it is better to create a CBSD virtual machine to set up the network and so on. To do this, stop the running VM (if started):
+
+```
+ps axfwww | grep "bhyve: micro1" |grep -v grep
+kill <PID_OF_BHYVE>
+```
+
+Create VM. Here we can create a disk of any size - we will overwrite it anyway:
+
+> cbsd bcreate jname=micro vm_os_type=freebsd vm_os_profile=FreeBSD-x64-13.1 imgtype=md imgsize=1g ip4_addr=DHCP
+
+Let's overwrite the disk created by the `bcreate` with a `micro` file from CBSD `jail2iso`:
+
+> cp -a /tmp/micro1-13.1_amd64.img ~cbsd/jails-data/micro-data/dsk1.vhd
+
+Now we can start the VM and by calling `ssh root@10.0.100.10` you can log into the VM using the password of the 'root' user from your host system, because we copied the files from the host system ( do you remember `cbsd copy-binlib basedir=/` ? ).
+
+## Errata
+
