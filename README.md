@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This article describes how to generate a minimalistic image of the [FreeBSD OS](https://www.freebsd.org) (architecture: amd64) for the [bhyve](https://en.wikipedia.org/wiki/Bhyve) virtual machine using the `jail2iso` script of the [CBSD project](https://github.com/cbsd/cbsd) as an example. As a result of these works, we get a **12MB** distribution kit and a working network stack with the ability to remotely access via SSH, as well as a set of elementary Unix utilities. The consumption of RAM by such an installation in multi-user mode does not exceed **80MB**:
+This article describes how to generate a minimalistic image of the [FreeBSD OS](https://www.freebsd.org) (architecture: amd64) for the [bhyve](https://en.wikipedia.org/wiki/Bhyve) virtual machine using the `jail2iso` script of the [CBSD project](https://github.com/cbsd/cbsd) as an example. As a result of these works, we get a **11MB** distribution kit and a working network stack with the ability to remotely access via SSH, as well as a set of elementary Unix utilities. The consumption of RAM by such an installation in multi-user mode does not exceed **80MB**:
 
 ```
 rctl -hu process:20349 |grep memoryuse
@@ -163,7 +163,7 @@ As a result, a small image **/tmp/micro1-13.1_amd64.img** will be generated:
 
 ```
 du -sh /tmp/micro1-13.1_amd64.img
-12M    /tmp/micro1-13.1_amd64.img
+11M    /tmp/micro1-13.1_amd64.img
 ```
 
 which you can check immediately via the `bhyve` startup script:
@@ -179,7 +179,7 @@ kill <PID_OF_BHYVE>
 
 Create VM. Here we can create a disk of any size - we will overwrite it anyway:
 
-> cbsd bcreate jname=micro vm_os_type=freebsd vm_os_profile=FreeBSD-x64-13.1 imgtype=md imgsize=1g ip4_addr=DHCP
+> cbsd bcreate jname=micro vm_os_type=freebsd vm_os_profile=FreeBSD-x64-13.1 imgtype=md imgsize=1g ip4_addr=10.0.100.10
 
 Let's overwrite the disk created by the `bcreate` with a `micro` file from CBSD `jail2iso`:
 
