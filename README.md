@@ -181,7 +181,9 @@ kill <PID_OF_BHYVE>
 
 Create VM. Here we can create a disk of any size - we will overwrite it anyway:
 
-> cbsd bcreate jname=micro vm_os_type=freebsd vm_os_profile=FreeBSD-x64-13.1 imgtype=md imgsize=1g ip4_addr=10.0.100.10
+```
+cbsd bcreate jname=micro vm_os_type=freebsd vm_os_profile=FreeBSD-x64-13.1 imgtype=md imgsize=1g ip4_addr=10.0.100.10
+```
 
 Let's overwrite the disk created by the `bcreate` with a `micro` file from CBSD `jail2iso`:
 
