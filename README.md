@@ -189,3 +189,27 @@ Now we can start the VM and by calling `ssh root@10.0.100.10` you can log into t
 
 ## Errata
 
+The kernel config file is really minimal. You can view its contents: *~cbsd/etc/defaults/FreeBSD-kernel-BHYVE-amd64-13.1*.
+
+If you open the VNC console on bhyve terminal, apart from the boot menu, you will not see the boot process and the console, since the devices responsible for outputting information in UEFI mode are also **turned off**. You can rebuild the kernel by uncommenting the entries:
+
+```
+device         vt
+device         vt_efifb
+```
+
+
+:bangbang: | :warning: Attention! Do not edit the *~cbsd/etc/defaults/FreeBSD-kernel-BHYVE-amd64-13.1* file, instead copy it or create your own 'FreeBSD-kernel-XXXX-amd64-13.1' file in the *~cbsd/etc/* directory because the files in *~cbsd/etc/defaults* is overwritten by `cbsd initenv`.
+:---: | :---
+
+## Afterword, instead of conclusion.
+
+[CBSD](https://github.com/cbsd/cbsd) is not only a jail and VM management tool, but also a framework that includes various auxiliary utilities for working with jail and VM, since they reuse the lots of common code of basic functions and maintaining them separately from CBSD is inappropriate. One of these scripts is `jail2iso`, with which you can get various bonuses from **CBSD**. For example, we all know such LiveCD distributions as [NomadBSD](https://nomadbsd.org/), [GhostBSD](https://ghostbsd.org/), [helloSystem](https://github.com/helloSystem/hello), etc. Using the CBSD `jail2iso` script, you can easily create your own LiveCD distributions based on FreeBSD, preparing and checking the settings and services in the jail container in advance. In a similar way, you can generate the most stripped-down FreeBSD distribution, where there is only your service and nothing more.
+
+Since we used compression only for the kernel, but not rootfs, it is possible to get an image size of up to **5MB** without changing the file structure (for example, with specialized busybox-like projects) by using `uzip/geom_uzip`, but more on that in another article.
+
+_
+**About FreeBSD OS**: Freely distributed under the most liberal BSD license, a general-purpose OS, the code of which is not affiliated with any companies;
+**About the CBSD project**: Founded in 2013, the project aims to create a framework for working with FreeBSD virtual environments to facilitate the creation of cluster and cloud solutions based on FreeBSD;
+**About the 'jail2iso' script**: the script was written and included in **CBSD** since 2014, the purpose of the script is to convert the jail of the FreeBSD operating system into a bootable media: ISO, memstick or virtual machine image. It is convenient for creating custom liveCD builds of FreeBSD - you can pre-configure and test all services in jail and make sure that they are correct and working, get a working ISO image or VM image with one command;
+**About bhyve**: a type 2 hypervisor included with FreeBSD that can run modern operating systems;
