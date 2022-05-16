@@ -47,4 +47,45 @@ Enable the atime attribute for jails/test1:
 
 > zfs set atime=on  jails/test1
 
-Now that you have configured the SSH service and adding user for login inside the container, you can restart the container and login via SSH. After that, the [find](https://man.freebsd.org/find/1) command will show files that "participated" in this activity (pay attention to the `-atime -5m` modifier - it shows the changed time for the last 5 minutes, so the interval between entering the jail and running find should be no more than these values:
+Now that you have configured the SSH service and adding user for login inside the container, you can restart the container and login via SSH. After that, the [find](https://man.freebsd.org/find/1) command will show files that "participated" in this activity (pay attention to the `-atime -5m` modifier - it shows the changed time for the last 5 minutes, so the interval between entering the jail and running `find` command should be no more than these values:
+
+```
+find ~cbsd/jails-data/test1-data -type f -atime -5m -print
+/usr/jails/jails-data/test1-data/var/run/sshd.pid
+/usr/jails/jails-data/test1-data/var/run/motd
+/usr/jails/jails-data/test1-data/var/run/ld-elf.so.hints
+/usr/jails/jails-data/test1-data/var/run/utx.active
+/usr/jails/jails-data/test1-data/var/log/utx.lastlogin
+/usr/jails/jails-data/test1-data/root/.cshrc
+/usr/jails/jails-data/test1-data/root/.history
+/usr/jails/jails-data/test1-data/root/.login
+/usr/jails/jails-data/test1-data/lib/libcrypto.so.111
+/usr/jails/jails-data/test1-data/bin/pwd
+...
+```
+
+Obviously, these files must be present in our 'gold' micro-container.
+
+or **second method**: Another convenient option for monitoring the required files is [AUDITD](https://man.freebsd.org/auditd/8). Set up AUDIT to monitor files on the host system:
+
+```
+cat > /etc/security/audit_control <<EOF
+dir:/var/audit
+flags:+fc,+fd,+fw
+minfree:5
+naflags:+fc,+fd,+fw
+policy:cnt,argv
+filesz:1M
+expire-after:10M
+EOF
+```
+
+then:
+> service auditd onestart
+
+Relogin to host and restart the `test1` container (AUDITD does not log events in sessions started **before** AUDITD started). Now, through the [praudit](https://man.freebsd.org/praudit/1) utility, you will be able to see all the files that are being read and written. Filter the output to get files related to the `test1` container only:
+
+> praudit /dev/auditpipe | grep ^path| grep test1
+
+## Copy file structure to micro-container
+
