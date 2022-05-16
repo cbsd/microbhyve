@@ -13,12 +13,12 @@ vmemoryuse=569M
 
 Why is it needed and to whom:
 
-- the script can be used as firmware when creating embedded products and services;
+- can be used as firmware when creating embedded products and services;
 - research activities, studying how FreeBSD boot works;
 
 For example, the initial microcontainer image with SSH access is used in the [MyBee project](https://github.com/myb-project/guide) when creating a [Kubernetes](https://kubernetes.io/) cluster. In this case, the [FreeBSD jail](https://docs.freebsd.org/en/books/handbook/jails/) is created as a jump-host environment for accessing a Kubernetes cluster, which has utilities for working with K8S: `kubectl`, `helm`, `k9s`. Here we go a little further and use CBSD `jail2iso` script to get the VM image. At the same time, the minimalism of the kernel is achieved by eliminating all options and drivers that are not required when working as a VM. Basically, only the network stack and the virtio driver remain in the kernel, which allows you to get a **2MB** kernel.
 
-## Preparation for work
+## Preparation
 
 We assume that we are getting a "bhyve" (and jail) image of the same version of FreeBSD we are working on. For the purposes of this article, this is FreeBSD 13.1-RELEASE. If you are using a different version, use the appropriate numbering instead of **13.1**.
 
