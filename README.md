@@ -91,7 +91,9 @@ Relogin to host and restart the `test1` container (AUDITD does not log events in
 
 Using the CBSD `copy-binlib` script and the already existing index file for a minimal FreeBSD + SSH environment in the `test1` container:
 
-> cbsd copy-binlib basedir=/ chaselibs=1 dstdir=/usr/jails/jails-data/micro1-data filelist=/usr/local/cbsd/share/FreeBSD-microbhyve.txt.xz
+```
+cbsd copy-binlib basedir=/ chaselibs=1 dstdir=/usr/jails/jails-data/micro1-data filelist=/usr/local/cbsd/share/FreeBSD-microbhyve.txt.xz
+```
 
 Note: make sure */usr/jails* is the correct path for the CBSD environment in your installation.
 
