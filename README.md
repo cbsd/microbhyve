@@ -209,7 +209,8 @@ device         vt_efifb
 Since we used compression only for the kernel, but not rootfs, it is possible to get an image size of up to **5MB** without changing the file structure (for example, with specialized busybox-like projects) by using `uzip/geom_uzip`, but more on that in another article.
 
 _
-**About FreeBSD OS**: Freely distributed under the most liberal BSD license, a general-purpose OS, the code of which is not affiliated with any companies;
-**About the CBSD project**: Founded in 2013, the project aims to create a framework for working with FreeBSD virtual environments to facilitate the creation of cluster and cloud solutions based on FreeBSD;
-**About the 'jail2iso' script**: the script was written and included in **CBSD** since 2014, the purpose of the script is to convert the jail of the FreeBSD operating system into a bootable media: ISO, memstick or virtual machine image. It is convenient for creating custom liveCD builds of FreeBSD - you can pre-configure and test all services in jail and make sure that they are correct and working, get a working ISO image or VM image with one command;
-**About bhyve**: a type 2 hypervisor included with FreeBSD that can run modern operating systems;
+- **About FreeBSD OS**: Freely distributed under the most liberal BSD license, a general-purpose OS, the code of which is not affiliated with any companies;
+- **About the CBSD project**: Founded in 2013, the project aims to create a framework for working with FreeBSD virtual environments to facilitate the creation of cluster and cloud solutions based on FreeBSD;
+- **About the 'jail2iso' script**: the script was written and included in **CBSD** since 2014, the purpose of the script is to convert the jail of the FreeBSD operating system into a bootable media: ISO, memstick or virtual machine image. It is convenient for creating custom liveCD builds of FreeBSD - you can pre-configure and test all services in jail and make sure that they are correct and working, get a working ISO image or VM image with one command;
+- **About bhyve**: a type 2 hypervisor included with FreeBSD that can run modern operating systems;
+
