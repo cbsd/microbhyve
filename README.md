@@ -202,7 +202,7 @@ device         vt_efifb
 :bangbang: | :warning: Attention! Do not edit the *~cbsd/etc/defaults/FreeBSD-kernel-BHYVE-amd64-13.1* file, instead copy it or create your own 'FreeBSD-kernel-XXXX-amd64-13.1' file in the *~cbsd/etc/* directory because the files in *~cbsd/etc/defaults* is overwritten by `cbsd initenv`.
 :---: | :---
 
-## Afterword, instead of conclusion.
+## Afterword, instead of conclusion
 
 [CBSD](https://github.com/cbsd/cbsd) is not only a jail and VM management tool, but also a framework that includes various auxiliary utilities for working with jail and VM, since they reuse the lots of common code of basic functions and maintaining them separately from CBSD is inappropriate. One of these scripts is `jail2iso`, with which you can get various bonuses from **CBSD**. For example, we all know such LiveCD distributions as [NomadBSD](https://nomadbsd.org/), [GhostBSD](https://ghostbsd.org/), [helloSystem](https://github.com/helloSystem/hello), etc. Using the CBSD `jail2iso` script, you can easily create your own LiveCD distributions based on FreeBSD, preparing and checking the settings and services in the jail container in advance. In a similar way, you can generate the most stripped-down FreeBSD distribution, where there is only your service and nothing more.
 
@@ -214,3 +214,6 @@ _
 - **About the 'jail2iso' script**: the script was written and included in **CBSD** since 2014, the purpose of the script is to convert the jail of the FreeBSD operating system into a bootable media: ISO, memstick or virtual machine image. It is convenient for creating custom liveCD builds of FreeBSD - you can pre-configure and test all services in jail and make sure that they are correct and working, get a working ISO image or VM image with one command;
 - **About bhyve**: a type 2 hypervisor included with FreeBSD that can run modern operating systems;
 
+## Demo
+
+[![asciicast](https://asciinema.org/a/494721.svg)](https://asciinema.org/a/494721)

@@ -1,0 +1,82 @@
+#!/bin/sh
+# HowTo/Sample how to create micro (~11 MB) FreeBSD bhyve guest
+
+# use 'micro1' as origin jail
+jname="micro1"
+myip="10.0.100.10/24"
+mygw="10.0.100.1"
+
+. /etc/rc.conf
+
+if [ -z "${cbsd_workdir}" ]; then
+	echo "no such cbsd_workdir in /etc/rc.conf"
+	exit 1
+fi
+
+my_ver=$( /usr/local/cbsd/misc/elf_tables --freebsdver /bin/sh )
+echo "Build bhyve image for FreeBSD ${my_ver} via jail: ${jname}"
+echo "network settings: IP: ${myip}, GW: ${mygw}"
+echo
+
+set -o errexit
+set -o xtrace
+
+# remove old jail
+cbsd jstatus jname=${jname} || cbsd jremove jname=${jname}
+
+cbsd jcreate jname=${jname} baserw=1 ver=empty applytpl=0
+cbsd copy-binlib basedir=/ chaselibs=1 dstdir=${cbsd_workdir}/jails-data/${jname}-data filelist=/usr/local/cbsd/share/FreeBSD-microbhyve.txt.xz
+
+cbsd sysrc jname=${jname} \
+	sshd_flags="-oUseDNS=no -oPermitRootLogin=yes" \
+	root_rw_mount="YES" \
+	sshd_enable=YES \
+	ifconfig_vtnet0="inet 10.0.100.10/24 up" \
+	defaultrouter="10.0.100.1" \
+	rc_startmsgs="YES"
+
+# strip debug info
+find ${cbsd_workdir}/jails-data/${jname}-data/ -type f -perm +111 -exec strip {} \;
+
+# unset autoboot_delay via custom loader.conf:
+cat > ${cbsd_workdir}/jails-system/${jname}/loader.conf <<EOF
+autoboot_delay="-1"
+if_vtnet_load="YES"
+EOF
+
+cp -a /etc/ssh ${cbsd_workdir}/jails-data/${jname}-data/etc/
+cp -a /etc/gss ${cbsd_workdir}/jails-data/${jname}-data/etc/
+cp -a /etc/pam.d ${cbsd_workdir}/jails-data/${jname}-data/etc/
+
+mkdir -p ${cbsd_workdir}/jails-data/${jname}-data/var/empty ${cbsd_workdir}/jails-data/${jname}-data/var/log ${cbsd_workdir}/jails-data/${jname}-data/var/run ${cbsd_workdir}/jails-data/${jname}-data/root ${cbsd_workdir}/jails-data/${jname}-data/dev
+
+chmod 0700 ${cbsd_workdir}/jails-data/${jname}-data/var/empty
+pw -R ${cbsd_workdir}/jails-data/${jname}-data usermod root -s /bin/sh
+
+# build kernel
+cbsd srcup ver="${my_ver}"
+cbsd kernel name=BHYVE ver="${my_ver}"
+
+# remove uneccesary mods
+for i in virtio_balloon.ko virtio_console.ko virtio_scsi.ko; do
+	rm -f ${cbsd_workdir}/basejail/FreeBSD-kernel_BHYVE_amd64_${my_ver}/boot/kernel/${i}
+done
+
+#strip ${cbsd_workdir}/basejail/FreeBSD-kernel_BHYVE_amd64_${my_ver}/boot/kernel/*.ko
+gzip -9 ${cbsd_workdir}/basejail/FreeBSD-kernel_BHYVE_amd64_${my_ver}/boot/kernel/kernel
+
+# network
+cat > ${cbsd_workdir}/jails-data/${jname}-data/etc/rc.local <<EOF
+/sbin/ifconfig vtnet0 inet ${myip} up
+/sbin/route add default ${mygw}
+EOF
+
+set +o xtrace
+set +o errexit
+
+echo "Convert ${jname} to bhyve image into /tmp..."
+# convert to bhyve
+cbsd jail2iso name=BHYVE jname=${jname} dstdir=/tmp media=bhyve freesize=2m ver=${my_ver} efi=1
+ret=$?
+
+exit ${ret}
